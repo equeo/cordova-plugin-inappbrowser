@@ -45,6 +45,10 @@
         self.toolbarcolor = nil;
         self.toolbartranslucent = YES;
         self.beforeload = @"";
+        self.originx = 0;
+        self.originy = 0;
+        self.width = 0;
+        self.height = 30;
     }
 
     return self;
