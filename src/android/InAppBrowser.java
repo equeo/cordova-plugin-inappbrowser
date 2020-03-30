@@ -630,6 +630,8 @@ public class InAppBrowser extends CordovaPlugin {
     }
 
     private InAppBrowser getInAppBrowser() {
+        return this;
+    }
 
         /**
          * Display a new browser with the specified URL.
