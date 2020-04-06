@@ -1,10 +1,10 @@
 {
-  "name": "cordova-plugin-inappbrowser",
-  "version": "3.2.1-dev",
+  "name": "cordova-plugin-inappbrowser-equeo",
+  "version": "3.3",
   "description": "Cordova InAppBrowser Plugin",
   "types": "./types/index.d.ts",
   "cordova": {
-    "id": "cordova-plugin-inappbrowser",
+    "id": "cordova-plugin-inappbrowser-equeo",
     "platforms": [
       "android",
       "browser",
