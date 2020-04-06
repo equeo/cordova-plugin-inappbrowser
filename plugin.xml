@@ -19,11 +19,11 @@
 -->
 
 <plugin xmlns="http://apache.org/cordova/ns/plugins/1.0"
-           id="cordova-plugin-inappbrowser"
-      version="3.2.1-dev">
+           id="cordova-plugin-inappbrowser-equeo"
+      version="3.3.0">
 
     <name>InAppBrowser</name>
-    <description>Cordova InAppBrowser Plugin</description>
+    <description>Cordova InAppBrowser Plugin Equeo</description>
     <license>Apache 2.0</license>
     <keywords>cordova,in,app,browser,inappbrowser</keywords>
     <repo>https://github.com/apache/cordova-plugin-inappbrowser</repo>
