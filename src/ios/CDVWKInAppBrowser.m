@@ -260,7 +260,7 @@ static CDVWKInAppBrowser* instance = nil;
 
     CGFloat height = 100;
     CGRect frame = [[UIScreen mainScreen] bounds];
-    
+
     originx =  browserOptions.originx ? browserOptions.originx : frame.origin.x;
     originy = browserOptions.originy ? browserOptions.originy : frame.origin.y;
     width = browserOptions.width ? browserOptions.width : frame.size.width;
@@ -736,14 +736,14 @@ BOOL isExiting = FALSE;
 
     WKWebViewConfiguration* configuration = [[WKWebViewConfiguration alloc] init];
 
-    NSString *userAgent = configuration.applicationNameForUserAgent;
-    if (
-        [self settingForKey:@"OverrideUserAgent"] == nil &&
-        [self settingForKey:@"AppendUserAgent"] != nil
-        ) {
-        userAgent = [NSString stringWithFormat:@"%@ %@", userAgent, [self settingForKey:@"AppendUserAgent"]];
-    }
-    configuration.applicationNameForUserAgent = userAgent;
+//     NSString *userAgent = configuration.applicationNameForUserAgent;
+//     if (
+//         [self settingForKey:@"OverrideUserAgent"] == nil &&
+//         [self settingForKey:@"AppendUserAgent"] != nil
+//         ) {
+//         userAgent = [NSString stringWithFormat:@"%@ %@", userAgent, [self settingForKey:@"AppendUserAgent"]];
+//     }
+//     configuration.applicationNameForUserAgent = userAgent;
     configuration.userContentController = userContentController;
 #if __has_include("CDVWKProcessPoolFactory.h")
     configuration.processPool = [[CDVWKProcessPoolFactory sharedFactory] sharedProcessPool];
@@ -751,23 +751,25 @@ BOOL isExiting = FALSE;
     [configuration.userContentController addScriptMessageHandler:self name:IAB_BRIDGE_NAME];
 
     //WKWebView options
-    configuration.allowsInlineMediaPlayback = _browserOptions.allowinlinemediaplayback;
-    if (IsAtLeastiOSVersion(@"10.0")) {
-        configuration.ignoresViewportScaleLimits = _browserOptions.enableviewportscale;
-        if(_browserOptions.mediaplaybackrequiresuseraction == YES){
-            configuration.mediaTypesRequiringUserActionForPlayback = WKAudiovisualMediaTypeAll;
-        }else{
-            configuration.mediaTypesRequiringUserActionForPlayback = WKAudiovisualMediaTypeNone;
-        }
-    }else{ // iOS 9
-        configuration.mediaPlaybackRequiresUserAction = _browserOptions.mediaplaybackrequiresuseraction;
-    }
-    
+    [[configuration preferences] setJavaScriptEnabled:YES];
+    [configuration setAllowsInlineMediaPlayback:YES];
+
+//     if (IsAtLeastiOSVersion(@"10.0")) {
+//         configuration.ignoresViewportScaleLimits = _browserOptions.enableviewportscale;
+//         if(_browserOptions.mediaplaybackrequiresuseraction == YES){
+//             configuration.mediaTypesRequiringUserActionForPlayback = WKAudiovisualMediaTypeAll;
+//         }else{
+//             configuration.mediaTypesRequiringUserActionForPlayback = WKAudiovisualMediaTypeNone;
+//         }
+//     }else{ // iOS 9
+//         configuration.mediaPlaybackRequiresUserAction = _browserOptions.mediaplaybackrequiresuseraction;
+//     }
+
     CGFloat originx = webViewBounds.origin.x;
     CGFloat originy = webViewBounds.origin.y - 44;
     CGFloat width = webViewBounds.size.width;
     CGFloat height = webViewBounds.size.height;
-    
+
     CGRect correctedWebViewBounds = CGRectMake(originx, originy, width, height);
 
     self.webView = [[WKWebView alloc] initWithFrame:correctedWebViewBounds configuration:configuration];
@@ -779,9 +781,11 @@ BOOL isExiting = FALSE;
     self.webView.navigationDelegate = self;
     self.webView.UIDelegate = self.webViewUIDelegate;
     self.webView.backgroundColor = [UIColor clearColor];
-    if ([self settingForKey:@"OverrideUserAgent"] != nil) {
-        self.webView.customUserAgent = [self settingForKey:@"OverrideUserAgent"];
-    }
+//     if ([self settingForKey:@"OverrideUserAgent"] != nil) {
+//         self.webView.customUserAgent = [self settingForKey:@"OverrideUserAgent"];
+//     }
+    NSString *userAgent = [self.webView valueForKey:@"userAgent"];
+    self.webView.customUserAgent = [userAgent stringByAppendingString:@" Safari"];
 
     self.webView.scrollView.bounces = NO;
     self.webView.clearsContextBeforeDrawing = YES;
@@ -1105,7 +1109,7 @@ BOOL isExiting = FALSE;
     if (IsAtLeastiOSVersion(@"7.0") && !viewRenderedAtLeastOnce) {
         viewRenderedAtLeastOnce = TRUE;
         CGRect viewBounds = [self.webView bounds];
-        
+
         viewBounds.size.height = viewBounds.size.height - STATUSBAR_HEIGHT;
         //simplified from https://github.com/apache/cordova-plugin-inappbrowser/issues/301#issuecomment-452220131
         //and https://stackoverflow.com/questions/46192280/detect-if-the-device-is-iphone-x
@@ -1251,6 +1255,32 @@ BOOL isExiting = FALSE;
     }
 
     return 1 << UIInterfaceOrientationPortrait;
+}
+
+- (void)webView:(WKWebView *)webView requestMediaCapturePermissionForOrigin:(WKSecurityOrigin *)origin initiatedByFrame:(WKFrameInfo *)frame
+  type:(WKMediaCaptureType)type decisionHandler:(void (^)(WKPermissionDecision decision))decisionHandler
+API_AVAILABLE(ios(15.0)){
+    if (@available(iOS 15.0, *)) {
+        decisionHandler(WKPermissionDecisionGrant);
+    } else {
+        // Fallback on earlier versions
+    }
+}
+
+- (void)webView:(WKWebView *)webView requestDeviceOrientationAndMotionPermissionForOrigin:(WKSecurityOrigin *)origin
+  initiatedByFrame:(WKFrameInfo *)frame decisionHandler:(void (^)(WKPermissionDecision decision))decisionHandler
+API_AVAILABLE(ios(15.0)){
+    if (@available(iOS 15.0, *)) {
+        decisionHandler(WKPermissionDecisionGrant);
+    } else {
+        // Fallback on earlier versions
+    }
+}
+
+- (void)webView:(WKWebView *)webView runOpenPanelWithParameters:(WKOpenPanelParameters *)parameters
+  initiatedByFrame:(WKFrameInfo *)frame completionHandler:(void (^)(NSArray<NSURL *> * _Nullable URLs))completionHandler
+{
+  completionHandler(nil);
 }
 
 @end //CDVWKInAppBrowserViewController
