@@ -18,6 +18,7 @@
 */
 package org.apache.cordova.inappbrowser;
 
+import android.Manifest;
 import android.annotation.SuppressLint;
 import android.annotation.TargetApi;
 import android.content.ComponentName;
@@ -91,10 +92,16 @@ import android.app.Activity;
 import android.os.Environment;
 import android.provider.MediaStore;
 import android.util.Log;
+import android.widget.Toast;
+
 import java.io.File;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+
+import androidx.annotation.NonNull;
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
 
 @SuppressLint("SetJavaScriptEnabled")
 public class InAppBrowser extends CordovaPlugin {
@@ -169,6 +176,13 @@ public class InAppBrowser extends CordovaPlugin {
     private Integer originY = 0;
     private Integer width = 0;
     private Integer height = 0;
+
+    private static final int CAMERA_MIC_PERMISSION_REQUEST_CODE = 101;
+    private static final String[] VIDEO_VISIT_PERMISSIONS = new String[] {
+            Manifest.permission.CAMERA,
+            Manifest.permission.RECORD_AUDIO
+    };
+    private Runnable mCameraMicPermissionRequest;
 
     /**
      * Executes the request and returns PluginResult.
@@ -1033,18 +1047,31 @@ public class InAppBrowser extends CordovaPlugin {
                         return true;
                     }
 
+                    @Override
+                    @TargetApi(Build.VERSION_CODES.LOLLIPOP)
+                    public void onPermissionRequest(final PermissionRequest request) {
+                        for (String resource : request.getResources()) {
+                            if (resource.equals(PermissionRequest.RESOURCE_VIDEO_CAPTURE)
+                                    || resource.equals(PermissionRequest.RESOURCE_AUDIO_CAPTURE)
+                            ) {
+                                mCameraMicPermissionRequest = () -> {
+                                    request.grant(request.getResources());
+                                };
+                                if (!checkPermissionForCameraAndMicrophone()) {
+                                    requestPermissionForCameraMicrophoneAndBluetooth();
+                                } else {
+                                    mCameraMicPermissionRequest.run();
+                                }
+                                break;
+                            }
+                        }
+                    }
+
                     private File createImageFile() throws IOException{
                         @SuppressLint("SimpleDateFormat") String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss").format(new Date());
                         String imageFileName = "img_"+timeStamp+"_";
                         File storageDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES);
                         return File.createTempFile(imageFileName,".jpg",storageDir);
-                    }
-
-                    @Override
-                    public void onPermissionRequest(final PermissionRequest request) {
-                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-                            request.grant(request.getResources());
-                        }
                     }
 
                     // For Android 4.1+
@@ -1071,7 +1098,12 @@ public class InAppBrowser extends CordovaPlugin {
                 currentClient = new InAppBrowserClient(thatWebView, edittext, beforeload);
                 inAppWebView.setWebViewClient(currentClient);
                 WebSettings settings = inAppWebView.getSettings();
+                settings.setGeolocationEnabled(true);
                 settings.setJavaScriptEnabled(true);
+                settings.setAppCacheEnabled(true);
+                settings.setDatabaseEnabled(true);
+                settings.setDomStorageEnabled(true);
+                settings.setMediaPlaybackRequiresUserGesture(false);
                 settings.setJavaScriptCanOpenWindowsAutomatically(true);
                 settings.setBuiltInZoomControls(showZoomControls);
                 settings.setPluginState(android.webkit.WebSettings.PluginState.ON);
@@ -1197,14 +1229,70 @@ public class InAppBrowser extends CordovaPlugin {
      * @param status the status code to return to the JavaScript environment
      */
     private void sendUpdate(JSONObject obj, boolean keepCallback, PluginResult.Status status) {
-        if (callbackContext != null) {
-            PluginResult result = new PluginResult(status, obj);
-            result.setKeepCallback(keepCallback);
-            callbackContext.sendPluginResult(result);
-            if (!keepCallback) {
-                callbackContext = null;
+//        if (callbackContext != null) {
+//            PluginResult result = new PluginResult(status, obj);
+//            result.setKeepCallback(keepCallback);
+//            callbackContext.sendPluginResult(result);
+//            if (!keepCallback) {
+//                callbackContext = null;
+//            }
+//        }
+    }
+
+    private void requestPermissionForCameraMicrophoneAndBluetooth() {
+        String[] permissionsList;
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.S) {
+            permissionsList = Arrays.copyOf(VIDEO_VISIT_PERMISSIONS, VIDEO_VISIT_PERMISSIONS.length + 1);
+            permissionsList[permissionsList.length - 1] = Manifest.permission.BLUETOOTH_CONNECT;
+
+        } else {
+            permissionsList = VIDEO_VISIT_PERMISSIONS;
+        }
+        requestPermissionsForResult(permissionsList, CAMERA_MIC_PERMISSION_REQUEST_CODE);
+    }
+
+    public void onRequestPermissionResult(int requestCode, String[] permissions, int[] grantResults) throws JSONException
+    {
+        Boolean cameraMicGranted = false;
+        for(int r:grantResults)
+        {
+            if(r == PackageManager.PERMISSION_DENIED && requestCode == CAMERA_MIC_PERMISSION_REQUEST_CODE)
+            {
+                return;
+            }
+            else if (r == PackageManager.PERMISSION_GRANTED && requestCode == CAMERA_MIC_PERMISSION_REQUEST_CODE) {
+                cameraMicGranted = true;
             }
         }
+
+        if (cameraMicGranted) {
+            mCameraMicPermissionRequest.run();
+        }
+    }
+
+    private void requestPermissionsForResult(String[] permissions, int requestCode) {
+        boolean displayRational = false;
+        for (String permission : permissions) {
+            displayRational |= ActivityCompat.shouldShowRequestPermissionRationale(cordova.getActivity(), permission);
+        }
+        if (displayRational) {
+            Toast.makeText(cordova.getContext(), "The permissions to access the microphone and the camera are necessary to consult a video doctor.", Toast.LENGTH_LONG).show();
+        } else {
+            cordova.requestPermissions(this, requestCode, permissions);
+        }
+    }
+
+    private boolean checkPermissionForCameraAndMicrophone() {
+        return checkPermissions(VIDEO_VISIT_PERMISSIONS);
+    }
+
+    private boolean checkPermissions(String[] permissions) {
+        boolean shouldCheck = true;
+        for (String permission : permissions) {
+            shouldCheck &= (PackageManager.PERMISSION_GRANTED == ContextCompat.checkSelfPermission(cordova.getActivity(), permission));
+        }
+        Log.d(LOG_TAG, "checkPermissions: " + shouldCheck);
+        return shouldCheck;
     }
 
     /**
