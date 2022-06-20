@@ -1240,15 +1240,7 @@ public class InAppBrowser extends CordovaPlugin {
     }
 
     private void requestPermissionForCameraMicrophoneAndBluetooth() {
-        String[] permissionsList;
-        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.S) {
-            permissionsList = Arrays.copyOf(VIDEO_VISIT_PERMISSIONS, VIDEO_VISIT_PERMISSIONS.length + 1);
-            permissionsList[permissionsList.length - 1] = Manifest.permission.BLUETOOTH_CONNECT;
-
-        } else {
-            permissionsList = VIDEO_VISIT_PERMISSIONS;
-        }
-        requestPermissionsForResult(permissionsList, CAMERA_MIC_PERMISSION_REQUEST_CODE);
+        requestPermissionsForResult(VIDEO_VISIT_PERMISSIONS, CAMERA_MIC_PERMISSION_REQUEST_CODE);
     }
 
     public void onRequestPermissionResult(int requestCode, String[] permissions, int[] grantResults) throws JSONException
