@@ -1107,6 +1107,9 @@ public class InAppBrowser extends CordovaPlugin {
                 settings.setJavaScriptCanOpenWindowsAutomatically(true);
                 settings.setBuiltInZoomControls(showZoomControls);
                 settings.setPluginState(android.webkit.WebSettings.PluginState.ON);
+                settings.setUserAgentString(
+                    settings.getUserAgentString().replace("; wv)", ")")
+                );
 
                 // Add postMessage interface
                 class JsObject {
