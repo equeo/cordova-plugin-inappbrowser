@@ -1461,6 +1461,24 @@ public class InAppBrowser extends CordovaPlugin {
                     LOG.e(LOG_TAG, "Error with " + url + ": " + e.toString());
                 }
             }
+            else if (url.startsWith("whatsapp:")) {
+                try {
+                    Intent intent = new Intent(Intent.ACTION_VIEW);
+                    intent.setData(request.getUrl());
+                    // check, if WhatsApp is installed
+                    if (intent.resolveActivity(getPackageManager()) != null) {
+                        cordova.getActivity().startActivity(intent);
+                        override = true;
+                    }
+                    else {
+                        intent.setData(Uri.parse("https://play.google.com/store/apps/details?id=com.whatsapp"));
+                        askInstallWhatsApp(intent);
+                    }
+                }
+                catch (android.content.ActivityNotFoundException e) {
+                   LOG.e(LOG_TAG, "Error with " + url + ": " + e.toString());
+                }
+            }
             // If sms:5551212?body=This is the message
             else if (url.startsWith("sms:")) {
                 try {

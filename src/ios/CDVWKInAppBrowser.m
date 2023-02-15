@@ -549,8 +549,22 @@ static CDVWKInAppBrowser* instance = nil;
     //if is an app store link, let the system handle it, otherwise it fails to load it
     if ([[ url scheme] isEqualToString:@"itms-appss"] || [[ url scheme] isEqualToString:@"itms-apps"] || [[ url scheme] isEqualToString:@"tel"] || [[ url scheme] isEqualToString:@"sms"] || [[ url scheme] isEqualToString:@"mailto"] || [[ url scheme] isEqualToString:@"geo"] || [[ url scheme] isEqualToString:@"whatsapp"]) {
         [theWebView stopLoading];
-        [self openInSystem:url];
-        shouldStart = NO;
+
+        NSURL *url = [[navigationAction request] URL];
+        if ([[UIApplication sharedApplication] canOpenURL: url]) {
+            [[UIApplication sharedApplication] openURL: url];
+            decisionHandler(WKNavigationActionPolicyCancel);
+           }
+           else {
+             [[UIApplication sharedApplication] openURL: [NSURL URLWithString: @"itms-appss://apps.apple.com/us/app/whatsapp-messenger/id310633997"]];
+             decisionHandler(WKNavigationActionPolicyCancel);
+           }
+        }
+        else {
+           decisionHandler(WKNavigationActionPolicyAllow);
+           [self openInSystem:url];
+           shouldStart = NO;
+        }
     }
     else if ((self.callbackId != nil) && isTopLevelNavigation) {
         // Send a loadstart event for each top-level navigation (includes redirects).
