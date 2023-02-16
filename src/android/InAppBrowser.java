@@ -1464,15 +1464,16 @@ public class InAppBrowser extends CordovaPlugin {
             else if (url.startsWith("whatsapp:")) {
                 try {
                     Intent intent = new Intent(Intent.ACTION_VIEW);
-                    intent.setData(request.getUrl());
+                    intent.setData(Uri.parse(url));
                     // check, if WhatsApp is installed
-                    if (intent.resolveActivity(getPackageManager()) != null) {
+                    if (intent.resolveActivity(cordova.getActivity().getPackageManager()) != null) {
                         cordova.getActivity().startActivity(intent);
                         override = true;
                     }
                     else {
                         intent.setData(Uri.parse("https://play.google.com/store/apps/details?id=com.whatsapp"));
-                        askInstallWhatsApp(intent);
+                        cordova.getActivity().startActivity(intent);
+                        override = true;
                     }
                 }
                 catch (android.content.ActivityNotFoundException e) {

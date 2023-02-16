@@ -547,50 +547,52 @@ static CDVWKInAppBrowser* instance = nil;
     }
 
     //if is an app store link, let the system handle it, otherwise it fails to load it
-    if ([[ url scheme] isEqualToString:@"itms-appss"] || [[ url scheme] isEqualToString:@"itms-apps"] || [[ url scheme] isEqualToString:@"tel"] || [[ url scheme] isEqualToString:@"sms"] || [[ url scheme] isEqualToString:@"mailto"] || [[ url scheme] isEqualToString:@"geo"] || [[ url scheme] isEqualToString:@"whatsapp"]) {
-        [theWebView stopLoading];
+    NSArray * allowedSchemes = @[@"itms-appss", @"itms-apps", @"tel", @"sms", @"mailto", @"geo", @"whatsapp"];
+        if ([allowedSchemes containsObject:[url scheme]]) {
 
-        NSURL *url = [[navigationAction request] URL];
-        if ([[UIApplication sharedApplication] canOpenURL: url]) {
-            [[UIApplication sharedApplication] openURL: url];
-            decisionHandler(WKNavigationActionPolicyCancel);
-           }
-           else {
-             [[UIApplication sharedApplication] openURL: [NSURL URLWithString: @"itms-appss://apps.apple.com/us/app/whatsapp-messenger/id310633997"]];
-             decisionHandler(WKNavigationActionPolicyCancel);
-           }
+            if ([[ url scheme] isEqualToString:@"whatsapp"]) {
+                if ([[UIApplication sharedApplication] canOpenURL: url]) {
+                    [theWebView stopLoading];
+                    [self openInSystem:url];
+                    shouldStart = NO;
+                }
+                else {
+                    [theWebView stopLoading];
+                    [self openInSystem:[NSURL URLWithString: @"itms-appss://apps.apple.com/us/app/whatsapp-messenger/id310633997"]];
+                    shouldStart = NO;
+                }
+            }
+            else {
+                [theWebView stopLoading];
+                [self openInSystem:url];
+                shouldStart = NO;
+            }
         }
-        else {
-           decisionHandler(WKNavigationActionPolicyAllow);
-           [self openInSystem:url];
-           shouldStart = NO;
-        }
-    }
-    else if ((self.callbackId != nil) && isTopLevelNavigation) {
-        // Send a loadstart event for each top-level navigation (includes redirects).
-        CDVPluginResult* pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK
-                                                      messageAsDictionary:@{@"type":@"loadstart", @"url":[url absoluteString]}];
-        [pluginResult setKeepCallback:[NSNumber numberWithBool:YES]];
+        else if ((self.callbackId != nil) && isTopLevelNavigation) {
+            // Send a loadstart event for each top-level navigation (includes redirects).
+            CDVPluginResult* pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK
+                                                          messageAsDictionary:@{@"type":@"loadstart", @"url":[url absoluteString]}];
+            [pluginResult setKeepCallback:[NSNumber numberWithBool:YES]];
 
-        [self.commandDelegate sendPluginResult:pluginResult callbackId:self.callbackId];
-    }
+            [self.commandDelegate sendPluginResult:pluginResult callbackId:self.callbackId];
+        }
 
     if (useBeforeLoad) {
         _waitForBeforeload = YES;
     }
 
     if(shouldStart){
-        // Fix GH-417 & GH-424: Handle non-default target attribute
-        // Based on https://stackoverflow.com/a/25713070/777265
-        if (!navigationAction.targetFrame){
-            [theWebView loadRequest:navigationAction.request];
-            decisionHandler(WKNavigationActionPolicyCancel);
+            // Fix GH-417 & GH-424: Handle non-default target attribute
+            // Based on https://stackoverflow.com/a/25713070/777265
+            if (!navigationAction.targetFrame){
+                [theWebView loadRequest:navigationAction.request];
+                decisionHandler(WKNavigationActionPolicyCancel);
+            }else{
+                decisionHandler(WKNavigationActionPolicyAllow);
+            }
         }else{
-            decisionHandler(WKNavigationActionPolicyAllow);
+            decisionHandler(WKNavigationActionPolicyCancel);
         }
-    }else{
-        decisionHandler(WKNavigationActionPolicyCancel);
-    }
 }
 
 #pragma mark WKScriptMessageHandler delegate
