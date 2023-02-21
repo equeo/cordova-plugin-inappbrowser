@@ -1136,10 +1136,10 @@ BOOL isExiting = FALSE;
         if (hasTopNotch){
         // we do not reset the y origin because we are on a different position inside our webview
         // viewBounds.origin.y = [UIApplication sharedApplication].statusBarFrame.size.height;
-            viewBounds.size.height = viewBounds.size.height - [UIApplication sharedApplication].statusBarFrame.size.height - 110;
+            viewBounds.size.height = viewBounds.size.height - [UIApplication sharedApplication].statusBarFrame.size.height - 40;
         } else {
 //            viewBounds.origin.y = STATUSBAR_HEIGHT;
-            viewBounds.size.height = viewBounds.size.height - STATUSBAR_HEIGHT - 110;
+            viewBounds.size.height = viewBounds.size.height - STATUSBAR_HEIGHT - 40;
         }
         self.webView.frame = viewBounds;
         [[UIApplication sharedApplication] setStatusBarStyle:[self preferredStatusBarStyle]];
