@@ -109,7 +109,7 @@ public class InAppChromeClient extends WebChromeClient {
                 String scriptCallbackId = defaultValue.substring(10);
                 if (scriptCallbackId.matches("^InAppBrowser[0-9]{1,10}$")) {
                     if(message == null || message.length() == 0) {
-                        scriptResult = new PluginResult(PluginsResult.Status.OK, new JSONArray());
+                        scriptResult = new PluginResult(PluginResult.Status.OK, new JSONArray());
                     } else {
                         try {
                             scriptResult = new PluginResult(PluginResult.Status.OK, new JSONArray(message));
