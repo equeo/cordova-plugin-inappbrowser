@@ -1100,7 +1100,6 @@ public class InAppBrowser extends CordovaPlugin {
                 WebSettings settings = inAppWebView.getSettings();
                 settings.setGeolocationEnabled(true);
                 settings.setJavaScriptEnabled(true);
-                settings.setAppCacheEnabled(true);
                 settings.setDatabaseEnabled(true);
                 settings.setDomStorageEnabled(true);
                 settings.setMediaPlaybackRequiresUserGesture(false);
