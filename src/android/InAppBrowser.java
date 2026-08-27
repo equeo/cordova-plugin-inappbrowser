@@ -849,16 +849,9 @@ public class InAppBrowser extends CordovaPlugin {
                 dialog.setInAppBroswer(getInAppBrowser());
 
                 Window window = dialog.getWindow();
-                WindowManager.LayoutParams wlp = window.getAttributes();
-                wlp.gravity = Gravity.TOP | Gravity.LEFT;
-                wlp.width = this.dpToPixels(width);
-                wlp.height = this.dpToPixels(height);
-                wlp.dimAmount=0.5f;
-
                 window.setFlags(WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL,
                         WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL);
                 window.clearFlags(WindowManager.LayoutParams.FLAG_DIM_BEHIND);
-                window.setAttributes(wlp);
 
                 // Main container layout
                 LinearLayout main = new LinearLayout(cordova.getActivity());
@@ -1191,18 +1184,36 @@ public class InAppBrowser extends CordovaPlugin {
                 if (showFooter) {
                     webViewLayout.addView(footer);
                 }
-
-                WindowManager.LayoutParams lp = new WindowManager.LayoutParams();
-                lp.copyFrom(dialog.getWindow().getAttributes());
-                lp.width = width > 0 ? this.dpToPixels(width) : WindowManager.LayoutParams.MATCH_PARENT;
-                lp.height = height > 0 ? this.dpToPixels(height) : WindowManager.LayoutParams.MATCH_PARENT;
-                lp.x = this.dpToPixels(originX);
-                lp.y = this.dpToPixels(originY);
-
+                
+                
                 if (dialog != null) {
                     dialog.setContentView(main);
                     dialog.show();
-                    dialog.getWindow().setAttributes(lp);
+                
+                    Window dialogWindow = dialog.getWindow();
+                    if (dialogWindow != null) {
+                        WindowManager.LayoutParams lp = dialogWindow.getAttributes();
+                
+                        lp.gravity = Gravity.TOP | Gravity.START;
+                        lp.width = width > 0
+                                ? this.dpToPixels(width)
+                                : WindowManager.LayoutParams.MATCH_PARENT;
+                        lp.height = height > 0
+                                ? this.dpToPixels(height)
+                                : WindowManager.LayoutParams.MATCH_PARENT;
+                        lp.x = this.dpToPixels(originX);
+                        lp.y = this.dpToPixels(originY);
+                
+                        LOG.d(
+                            LOG_TAG,
+                            "InAppBrowser bounds: originX=" + originX
+                                + ", originY=" + originY
+                                + ", width=" + width
+                                + ", height=" + height
+                        );
+
+                        dialogWindow.setAttributes(lp);
+                    }
                 }
                 // the goal of openhidden is to load the url and not display it
                 // Show() needs to be called to cause the URL to be loaded
